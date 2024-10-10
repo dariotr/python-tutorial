@@ -10,22 +10,34 @@ MODEL = "gpt-35-turbo"
 
 def request(input, role=ROLE):
     ## 3a generate the role as shown in test3.test_request
-    pass
+    return [{"role": "system", "content": role},
+            {"role": "user", "content": input}]
+    
 
 def ask(ai, input, role=ROLE):
-    
-    comp = None
     ## 3b invoke the chat completion API
-    
-    res = "Sorry, there is an error"
+    comp = ai.chat.completions.create(
+        model=MODEL,
+        messages=request(input,role)
+    )
     
     ## 3c read the first message content if any
+    if len(comp.choices) >0:
+        res = comp.choices[0].message.content
         
     return res
 
 def connect(args):
-    pass
+    ver = "2023-12-01-preview"
+    key = args.get("OPENAI_API_KEY")
+    host = args.get("OPENAI_API_HOST")
     ## 2a connect ai with Azure OpenAI and return the api object
+    return AzureOpenAI(
+        api_version=ver,
+        api_key=key,
+        azure_endpoint=host
+    )
+    
 
 def main(args):
     # connect to the AI
@@ -36,7 +48,10 @@ def main(args):
 
     output = "Connection Error."
     ## 2b retrieve the model we use, check the status and return 'Welcome.' if is 'succeeded'
+    model = ai.models.retrieve(MODEL)
 
+    if model.status == 'succeeded':
+        output = "Welcome."
     # if the input is not empty, ask to the AI
     if input != "":
         output = ask(ai, input)
